@@ -96,7 +96,7 @@ def writer_image(cl,image):
         os.makedirs(save_path)
     now_time = time.strftime("%Y-%m-%H-%M-%S",time.localtime())
     image_name = os.path.join(save_path,str(now_time) + ".jpg")
-    image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+    # image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
     cv2.imwrite(image_name,image)
     print("Save to",image_name)
 
