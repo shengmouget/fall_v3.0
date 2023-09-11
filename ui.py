@@ -18,6 +18,11 @@ class Mywindow(QWidget,Ui_Form):
         # 控制数据库连接
         self.conn = False
         self.flag_conn = False
+        # 设置录制状态标志
+        self.is_recording = False
+        # 初始化视频写入器
+        self.out = None
+        self.luxiang.setEnabled(False)
         self.cap = cv2.VideoCapture()
         # 定时器
         self.timer = QtCore.QTimer()
@@ -32,6 +37,7 @@ class Mywindow(QWidget,Ui_Form):
         self.video_2.clicked.connect(self.open_camera)
         self.timer.timeout.connect(self.show_camera)
         self.video_det.clicked.connect(self.open_video)
+        self.luxiang.clicked.connect(self.toggle_record)
         self.closes.clicked.connect(app.exit)
     # 数据库连接函数
     def connect_db(self):
@@ -95,6 +101,7 @@ class Mywindow(QWidget,Ui_Form):
             else:
                 self.timer.start(30)
                 self.video_2.setText("关闭摄像头")
+                self.luxiang.setEnabled(True)
                 self.image_det.setEnabled(False)
                 self.video_det.setEnabled(False)
         else:
@@ -104,6 +111,7 @@ class Mywindow(QWidget,Ui_Form):
             self.count = 0
             self.video_2.setText("打开摄像头")
             self.image_det.setEnabled(True)
+            self.luxiang.setEnabled(False)
             self.video_det.setEnabled(True)
     # 展示
     def show_camera(self):
@@ -115,6 +123,8 @@ class Mywindow(QWidget,Ui_Form):
         self.count += 1 
         image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         image = cv2.resize(image,(640,640))
+        if self.is_recording:
+            self.out.write(image)
         output,_  = self.model.inference(image)
         outbox = filter_box(output,0.5,0.7)
         if outbox.shape[0] > 0:
@@ -159,7 +169,24 @@ class Mywindow(QWidget,Ui_Form):
             self.timer.stop()
             self.zhuangtai.setText("视频播放结束")
            
-
+    # 视频录制功能
+    def toggle_record(self):
+        if not self.is_recording:
+            # 开始录制
+            self.luxiang.setText('停止录制')
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            # self.out = cv2.VideoWriter(current_time + '.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1
+            #                            , (self.cap.get(3), self.cap.get(4)))
+            self.out = cv2.VideoWriter(f'output_{current_time}.mp4', 
+                                       cv2.VideoWriter_fourcc(*'MP4V'), 
+                                       30, (640,640)) 
+            self.is_recording = True
+        else:
+            # 停止录制
+            self.luxiang.setText('开始录制')
+            self.out.release()
+            self.is_recording = False
+    
         
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
